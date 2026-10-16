@@ -95,6 +95,11 @@ TOKEN                                      SYMBOL   SPENDER                     
 - No EIP-55 checksum validation (keccak intentionally avoided to stay
   dependency-free); addresses are validated for format and normalized to
   lowercase.
+- No concurrency: the analyze phase makes up to 4 sequential RPC calls per
+  (token, spender) pair (`allowance`, `symbol`, `decimals`, `eth_getCode`), so
+  wallets with hundreds of live approvals take a while on high-latency RPCs.
+- Only standard ERC-20 `Approval` events are detected; tokens emitting
+  non-standard approval events are missed.
 - Example addresses in docs/tests are well-known public addresses
   (e.g. `vitalik.eth`) or synthetic — never real user wallets.
 
