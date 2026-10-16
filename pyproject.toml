@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "allowance-guard"
+version = "1.0.0"
+description = "Read-only ERC-20 approval risk scanner (unlimited allowances, EOA spenders)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+allowance-guard = "allowance_guard.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["allowance_guard*"]
