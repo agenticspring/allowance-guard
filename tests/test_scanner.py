@@ -75,6 +75,34 @@ class TestScanner(unittest.TestCase):
         pairs = scan_approvals(FakeRpc(), OWNER, 5, 5, chunk=5000)
         self.assertEqual(len(pairs), 2)
 
+    def test_scan_skips_malformed_logs(self):
+        class MalformedRpc(FakeRpc):
+            def call(self, method, params):
+                if method == "eth_getLogs":
+                    good = {
+                        "address": TOKEN1,
+                        "topics": [
+                            abi.APPROVAL_TOPIC,
+                            abi.topic_for_owner(OWNER),
+                            "0x" + "0" * 24 + S1[2:],
+                        ],
+                    }
+                    return [
+                        good,
+                        {"topics": []},  # no topics
+                        {"address": TOKEN1},  # missing topics key
+                        {"topics": [abi.APPROVAL_TOPIC]},  # < 3 topics
+                        {"address": "not-an-address", "topics": good["topics"]},
+                        {"address": TOKEN1, "topics": [abi.APPROVAL_TOPIC,
+                                                       abi.topic_for_owner(OWNER),
+                                                       "0x1234"]},  # short topic
+                        "not-a-dict",
+                    ]
+                return super().call(method, params)
+
+        pairs = scan_approvals(MalformedRpc(), OWNER, 5, 5, chunk=5000)
+        self.assertEqual(pairs, {(TOKEN1, S1): True})
+
     def test_analyze_flags(self):
         findings = analyze(FakeRpc(), OWNER, {(TOKEN1, S1): True, (TOKEN2, S2): True})
         self.assertEqual(len(findings), 2)

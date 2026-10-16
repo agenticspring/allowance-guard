@@ -27,11 +27,23 @@ def scan_approvals(rpc, owner, from_block, to_block, chunk=5000, progress=None):
             ],
         )
         for log in logs or []:
+            if not isinstance(log, dict):
+                continue
             topics = log.get("topics", [])
             if len(topics) < 3:
                 continue
-            token = "0x" + log["address"][2:].lower()
-            spender = "0x" + topics[2][-40:].lower()
+            addr = log.get("address")
+            if not abi.is_address(addr):
+                continue
+            spender_topic = topics[2]
+            if (
+                not isinstance(spender_topic, str)
+                or len(spender_topic) != 66
+                or not spender_topic.startswith("0x")
+            ):
+                continue
+            token = abi.normalize_address(addr)
+            spender = "0x" + spender_topic[-40:].lower()
             pairs[(token, spender)] = True
         if progress:
             progress(start, end, to_block)
